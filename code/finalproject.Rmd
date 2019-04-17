@@ -1,17 +1,22 @@
 ---
 title: "Final Project"
 author: "Mengtian Guo"
-date: "Apeil 14, 2019"
+date: "April 14, 2019"
 output: html_document
-url: https://github.com/nicoleencore/dataanalytics/tree/master/finalreport
+
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Data Import and Cleaning
+##URL
+```{r}
+#url: https://github.com/nicoleencore/dataanalytics/tree/master/finalreport
 
+```
+
+## Data Import and Cleaning
 ```{r, echo=T}
 library(readr)
 dat = read_csv('C:/Users/Nicole Guo/Desktop/506/final project/Github/dataanalytics/data/gapminder.csv')
