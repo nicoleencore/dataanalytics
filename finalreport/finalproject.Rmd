@@ -1,0 +1,123 @@
+---
+title: "Final Project"
+author: "Mengtian Guo"
+date: "Apeil 14, 2019"
+output: html_document
+url: https://github.com/nicoleencore/dataanalytics/tree/master/finalreport
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data Import and Cleaning
+
+```{r, echo=T}
+library(readr)
+dat = read_csv('C:/Users/Nicole Guo/Desktop/506/final project/Github/dataanalytics/data/gapminder.csv')
+dat <- na.omit(dat)
+str(dat)
+```
+As seen from the updated dataset with missing values removed, Country and region are character variables, while Year, life, population and income are numerical variables.
+
+## Correlation of Life, Population and Income
+```{r, echo=T}
+cordat<-cor(dat[3:5])
+library(corrplot)
+corrplot(cordat, type="upper")
+
+```
+As seen from the correlation matrix visualizations, life expectancy and income are moderately related, so in subsequent analyses we want to keep in mind the covariance between income and life expectancy -- any association between another variable and income might apply to association with life expectancy as well, and any association between another variable and income might be explained by life expectancy. 
+
+
+## Basis Statistics
+```{r, echo=T}
+mean(dat[["life"]])
+mean(dat[["population"]])
+mean(dat[["income"]], trim=0.1) # (trim=0.1 drops 10% from each end)
+
+weighted.mean(dat[["life"]], w=dat[["population"]])
+library("matrixStats")
+weightedMedian(dat[["income"]], w=dat[["population"]]) 
+```
+As seen from the weighted averages of life expectancy and income based on population, where the measure is not sensitive to outliers, average life expectancy is 62.6 years old and average income is $3878.9.
+
+## Histogram 
+```{r, echo=T}
+uniqueregion = unique(dat$region)
+
+par(mfrow = c(3, 2))
+hist(subset(dat, region == "South Asia")$income, main="Histogram of Income in South Asia", xlab = "Income")
+hist(subset(dat, region == "Europe & Central Asia")$income, main="Histogram of Income Distribution in Europe & Central Asia", xlab = "Income")
+hist(subset(dat, region == "Middle East & North Africa")$income, main="Histogram of Income Distribution in Middle East & North Africa", xlab = "Income")
+hist(subset(dat, region == "Sub-Saharan Africa")$income, main="Histogram of Income Distribution in Sub-Saharan Africa", xlab = "Income")
+hist(subset(dat, region == "America")$income, main="Histogram of Income Distribution in America", xlab = "Income")
+hist(subset(dat, region == "East Asia & Pacific")$income, main="Histogram of Income Distribution in East Asia & Pacific", xlab = "Income")
+
+```
+As seen from the histograms, America and Europe & Central Asia have the least income inequality with steadily decreasing frequency among the richest and the poorest, while Middle East & North Africa and East Asia & Pacific have the highest inequality with huge differences between the richest and the poorest. Also, Sub-Saharan Africa and South Asia is the most impoverished with income concentrated below $5000.
+ 
+## ggplot
+```{r, echo=T}
+library(ggplot2)
+region=dat$region
+income=dat$income
+life=dat$life
+qplot(region, income, data = dat, facets = . ~ Year, xlab = "Year", main="Income by Year")
+qplot(region, life, data = dat, facets = . ~ Year, xlab = "Year",main="Life Expectancy by Year")
+
+ggplot(data = dat, mapping = aes(x = income)) + 
+  geom_freqpoly(mapping = aes(colour = region), binwidth = 2000) +
+  ggtitle("Income of Each Region")
+
+ggplot(data = dat, mapping = aes(x = region, y = life)) +
+  geom_boxplot() +
+  ggtitle("Life Expectancy by Region")
+
+```
+ 
+As seen from the qplots, both income and life expectancy increase over year. However, there are differences among regions in terms of life expectancy/income, regardless of year, as described below.
+
+As seen from the line graphs, similar to the last histogram finding, Sub-Saharan Africa is the most impoverished with a highest quantity for lowest income population, while Europe & Central Asia is the richest considering the count after $12500.
+
+As seen from the boxplots, life expectancy is highest in Europe & Central Asia, with an average of 70 years old and a small IQR (life expectancy high for every one), followed by America, with an average of 67 years old and a higher IQR. The lowest life expectancy is seen in Sub-Saharan Africa and South Asia, both of which have an average of around 50 years old and the latter has a higher IQR.
+
+To summarize findings from the histogram and ggplots graphs, Europe & Central Asia and America are the richest, have the least income disparity and highest life expectancy. Sub-Saharan Africa is the poorest and has the lowest life expectancy. Middle East & North Africa and East Asia & Pacific are the most inequal income-wise. The similarity between the region and income relationship and the region and life expectancy relationship supports the above-mentioned covariance between income and life expectancy.
+
+## Hierarchical Cluster Analysis
+### Perform Agglomerative Cluster Analysis
+```{r, echo=T}
+library(tidyverse)
+library(cluster)    
+library(factoextra) 
+library(dendextend)
+
+dat = head(dat)
+
+
+# Compute with agnes
+hc2 <- agnes(dat, method = "complete")
+
+# Agglomerative coefficient
+hc2$ac
+
+# methods to assess
+m <- c( "average", "single", "complete", "ward")
+names(m) <- c( "average", "single", "complete", "ward")
+
+# function to compute coefficient
+ac <- function(x) {
+  agnes(dat, method = x)$ac
+}
+
+map_dbl(m, ac)
+
+```
+
+As seen from the last function, the complete method identifies the strongest clustering structure of the four methods assessed (0.82). To form the visualization:
+
+### Visualize Dendrogram
+```{r, echo=T}
+hc3 <- agnes(dat, method = "complete")
+pltree(hc3, cex = 0.6, hang = -1, main = "Dendrogram of agnes") 
+```
